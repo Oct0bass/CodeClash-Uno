@@ -3,10 +3,8 @@
 
 #include <stdbool.h>
 
-//The regular colors, in deck order.
-const char regularColors[] = {'R', 'Y', 'G', 'B'};
-//The special types, in deck order
-const char specialTypes[] = {'A', 'O', 'N', 'R'};
+extern const char regularColors[];
+extern const char specialTypes[];
 
 typedef struct card_s {
     char name; 
@@ -14,8 +12,10 @@ typedef struct card_s {
     struct card_s *listp;
 } card;
 
-char* cardName(card s);
+char* cardName(card s, char buf[], int len);
 
-bool isCompatible(card a, card b);
+void printCard(card s);
+
+bool isValidCard(card a, card b);
 
 #endif //CARD_H

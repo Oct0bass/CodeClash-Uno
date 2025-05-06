@@ -1,0 +1,7 @@
+# Executable/Debug
+game
+*.dSYM
+
+# Misc Stuff
+*.pdf
+.DS_Store

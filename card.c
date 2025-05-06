@@ -1,20 +1,27 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include "card.h"
+#include "config.h"
 
-char* cardName(card c) {
-    char result[20];
+//The regular colors, in deck order.
+const char regularColors[] = {'R', 'Y', 'G', 'B'};
+//The special types, in deck order
+const char specialTypes[] = {'A', 'O', 'N', 'R'};
+
+char* cardName(card c, char buf[], int len) {
     if (c.color == 'S') {
         switch (c.name) {
-            case 'A': return "AND";
+            case 'A': strncpy(buf, "AND", len);
             break;
-            case 'O': return "OR";
+            case 'O': strncpy(buf, "OR", len);;
             break;
-            case 'N': return "NOT";
+            case 'N': strncpy(buf, "NOT", len);
             break;
-            case 'R': return "Reverse";
+            case 'R': strncpy(buf, "Reverse", len);
         }
+        return buf;
     }
     int colorCode;
     char* colorName;
@@ -36,11 +43,20 @@ char* cardName(card c) {
         colorCode = 34;
         break;
     }
+    #ifdef COLOR
     //colored text!!
-    snprintf(result, sizeof(result), "\033[%dm%s %c\033[0m", colorCode, colorName, c.name);
-    return result;
+    snprintf(buf, len, "\033[%dm%s %c\033[0m", colorCode, colorName, c.name);
+    #else
+    snprintf(buf, len, "%s %c", colorName, c.name);
+    #endif
+    return buf;
 }
 
-bool isCompatible(card a, card b) {
+void printCard(card c) {
+    char buf[20];
+    printf("%s\n", cardName(c, buf, sizeof buf));
+}
+
+bool isValidCard(card a, card b) {
     return a.name == b.name || (a.color == b.color && a.color != 'S');
 }

@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "C: Debug with external console",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/game",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "externalConsole": true,
+        "MIMode": "lldb",
+      }
+    ]
+  }
+  
