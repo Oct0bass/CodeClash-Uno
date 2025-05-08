@@ -10,6 +10,17 @@ const char regularColors[] = {'R', 'Y', 'G', 'B'};
 //The special types, in deck order
 const char specialTypes[] = {'A', 'O', 'N', 'R'};
 
+char* colorName(card c) {
+    switch (c.color) {
+        case 'R': return "RED";
+        case 'G': return "GREEN";
+        case 'Y': return "YELLOW";
+        case 'B': return "BLUE";
+        case 'S': return "SPECIAL";
+        default: return "<unknown color>";
+    }
+}
+
 char* cardName(card c, char buf[], int len) {
     if (c.color == 'S') {
         switch (c.name) {
@@ -24,28 +35,23 @@ char* cardName(card c, char buf[], int len) {
         return buf;
     }
     int colorCode;
-    char* colorName;
     switch (c.color) {
         case 'R':
-        colorName = "RED";
         colorCode = 31;
         break;
         case 'G':
-        colorName = "GREEN";
         colorCode = 32;
         break;
         case 'Y':
-        colorName = "YELLOW";
         colorCode = 33;
         break;
         case 'B':
-        colorName = "BLUE";
         colorCode = 34;
         break;
     }
     #ifdef COLOR
     //colored text!!
-    snprintf(buf, len, "\033[%dm%s %c\033[0m", colorCode, colorName, c.name);
+    snprintf(buf, len, "\033[%dm%s %c\033[0m", colorCode, colorName(c), c.name);
     #else
     snprintf(buf, len, "%s %c", colorName, c.name);
     #endif
@@ -58,5 +64,7 @@ void printCard(card c) {
 }
 
 bool isValidCard(card a, card b) {
-    return a.name == b.name || (a.color == b.color && a.color != 'S');
+    return ((a.color == 'S') != (b.color == 'S')) //one but not both special
+        || (a.name == b.name && a.color != 'S')
+        || (a.color == b.color && a.color != 'S');
 }

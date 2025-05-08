@@ -12,6 +12,8 @@ typedef struct card_s {
     struct card_s *listp;
 } card;
 
+char* colorName(card c);
+
 char* cardName(card s, char buf[], int len);
 
 void printCard(card s);

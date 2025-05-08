@@ -73,7 +73,14 @@ card* getCard(card* deck, int n) {
 }
 
 card* lastCard(card* p, int deckSize) {
+    if (deckSize == 0) return NULL;
     for (int i = 0; p->listp && i < deckSize - 1; p = p->listp);
+    return p;
+}
+
+card* secondLastCard(card* p, int deckSize) {
+    if (deckSize < 2) return NULL;
+    for (int i = 0; i < deckSize - 2 && p->listp->listp; p = p->listp, i++);
     return p;
 }
 
@@ -81,22 +88,25 @@ card* lastCard(card* p, int deckSize) {
 card* popFront(card** listpp, int* deckSize) {
     card* result = *listpp;
     *listpp = (*listpp)->listp;
-    (*deckSize)++;
+    (*deckSize)--;
     return result;
 }
 
 //Remove the last card and return it
 card* popCard(card* p, int* deckSize) {
     //Find the penultimate card
-    for (; p->listp->listp; p = p->listp);
-    card* result = p->listp;
-    p->listp = NULL;
+    card* secondLast = secondLastCard(p, *deckSize);
+    card* result = secondLast->listp;
+    secondLast->listp = NULL;
+    (*deckSize)--;
     return result;
 }
 
 void appendCard(card* p, int* deckSize, card* new) {
-    lastCard(p, *deckSize)->listp = new;
-    (*deckSize)++;
+    if (deckSize > 0) {
+        lastCard(p, *deckSize)->listp = new;
+        (*deckSize)++;
+    }
 }
 
 void pushCard(card** deckp, int* deckSize, card* new) {
@@ -111,19 +121,33 @@ card* removeCard(card** listpp, int* deckSize, int pos) {
     card* removed = prev->listp;
     prev->listp = removed->listp;
     (*deckSize)--;
+    removed->listp = NULL;
     return removed;
 }
 
-int drawCard(card* deck, int* deckSize, player p) {
+int drawCard(card* deck, int* deckSize, player* p) {
     if (*deckSize == 0) return 0;
-    appendCard(p.deck, &p.deckSize, popCard(deck, deckSize));
+    card* newCard = popCard(deck, deckSize);
+    if (p->deckSize >= 1) { 
+        appendCard(p->deck, &p->deckSize, newCard);
+    } else {
+        p->deck = newCard;
+        p->deckSize = 1;
+    }
     return 1;
+}
+
+int drawCards(card* deck, int* deckSize, player* p, int n) {
+    if (n == 0) return 1;
+    for (int i = 0; i < n; i++) {
+        drawCard(deck, deckSize, p);
+    }
 }
 
 void dealCards(card* deck, int* deckSize, player players[], int playerCount, int cards) {
     for (int i = 0; i < cards; i++) {
         for (int j = 0; j < playerCount; j++) {
-            if (drawCard(deck, deckSize, players[i]) == 0) return;
+            if (drawCard(deck, deckSize, &players[j]) == 0) return;
         }
     }
 }

@@ -12,7 +12,9 @@ typedef struct player_s {
     bool computer;
 } player;
 
-void playCard(player player, card* discard, int* discardSize, int n);
+bool checkValidCards(player player, card topCard);
+
+void playCard(player* player, card* discard, int* discardSize, int n);
 
 void printPlayer(player player);
 

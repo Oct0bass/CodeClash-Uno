@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +10,35 @@
 #include "config.h"
 
 const int maxPlayers = 10;
+
+bool handleAND(player currentPlayer, card topOfPile) {
+    int i = 0;
+    for (card* p = currentPlayer.deck; p && i < currentPlayer.deckSize; p = p->listp, i++) {
+        if (p->color == topOfPile.color && p->name == topOfPile.name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool handleOR(player currentPlayer, card topOfPile) {
+    int i = 0;
+    for (card* p = currentPlayer.deck; p && i < currentPlayer.deckSize; p = p->listp, i++) {
+        if (p->color == topOfPile.color || p->name == topOfPile.name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void handleReverse(int* reverseFlag) {
+    *reverseFlag *= -1;
+}
+
+//Returns the new current player index
+int handleNOT(int currentPlayerIndex, int playerCount, int reverseFlag) {
+    return (currentPlayerIndex + reverseFlag) % playerCount;
+}
 
 int main(void) {
     char linebuf[4];
@@ -48,18 +78,80 @@ int main(void) {
 
     dealCards(deck, &deckSize, players, playerCount, 7);
 
-    int discardSize = 1;
-    card* discard = popCard(deck, &deckSize);
+    int discardSize = 0;
+    card* discard = NULL;
 
     player* winner = NULL;
-    int currentPlayer = 0;
+    player* p;
     int reverseFlag = 1;
-    while (winner == NULL) {
+    char topCardName[20];
+    for (int currentPlayer = 0; winner == NULL; currentPlayer = (currentPlayer + reverseFlag) % totalPlayers) {
+        card* topCard = lastCard(discard, discardSize);
+        card* secondCard = secondLastCard(discard, discardSize);
+        if (topCard) {
+            cardName(*topCard, topCardName, sizeof topCardName);
+            if (secondCard && secondCard->name == 'A')  {
+                printf("Top of pile is %s with AND\n", topCardName);
+            } else if (secondCard && secondCard->name == 'O') {
+                printf("Top of pile is %s with OR\n", topCardName);
+            } else printf("Top of pile is %s\n", topCardName);
+        }
         for (int i = 0; i < totalPlayers; i++) {
             printPlayer(players[i]);
         }
-        int choice = makeSelection(players[currentPlayer], *lastCard(discard, discardSize));
-        playCard(players[currentPlayer], discard, &discardSize, choice);
-        currentPlayer = (currentPlayer + reverseFlag) % totalPlayers;
+        p = &players[currentPlayer];
+        if (topCard == NULL) {
+            discard = removeCard(&p->deck, &p->deckSize, makeSelection(*p, (card) {'\0', '\0', NULL}));
+            discardSize++;
+            continue;
+        }
+        if (secondCard && secondCard->color == 'S') {
+            switch (secondCard->name) {
+                case 'A':
+                if (handleAND(*p, *topCard)) {
+                    playCard(p, discard, &discardSize, makeSelection(*p, *topCard));
+                    printf("Card Matches, no AND penalty\n");
+                } else {
+                    printf("%s has no card that matches %s and %d\n", p->name, colorName(*topCard), topCard->name);
+                    printf("AND penalty, draw 4\n");
+                    drawCards(deck, &deckSize, p, 4);
+                }
+                break;
+                case 'O':
+                if (handleOR(*p, *topCard)) {
+                    playCard(p, discard, &discardSize, makeSelection(*p, *topCard));
+                    printf("Card Matches, no OR penalty\n");
+                } else {
+                    printf("%s has no card that matches %s or %d\n", p->name, colorName(*topCard), topCard->name);
+                    printf("OR penalty, draw 4\n");
+                    drawCards(deck, &deckSize, p, 4);
+                }
+            }
+        } else if (topCard->color == 'S') {
+            switch (topCard->color) {
+                case 'R': handleReverse(&reverseFlag);
+                break;
+                case 'N': currentPlayer = handleNOT(currentPlayer, playerCount, reverseFlag);
+            }
+        } else if (checkValidCards(*p, *topCard)) {
+            card* choice = removeCard(&p->deck, &p->deckSize, makeSelection(*p, *topCard));
+            appendCard(discard, &discardSize, choice);
+            if (choice->color == 'S' && (choice->name == 'A' || choice->name == 'O')) {
+                playCard(p, discard, &discardSize, makeSelection(*p, *choice));
+            }
+        } else drawCard(deck, &deckSize, p);
+        if (p->deckSize == 0) winner = p;
+        if (winner == NULL && deckSize == 0) {
+            int minHand = players[0].deckSize;
+            for (int i = 0; i < playerCount; i++) {
+                if (players[i].deckSize < minHand) {
+                    minHand = players[i].deckSize;
+                    winner = &players[i];
+                }
+            }
+        }
     }
+    freeDeck(deck, deckSize);
+    freeDeck(discard, discardSize);
+    for (int i = 0; i < playerCount; i++) freeDeck(players[i].deck, players[i].deckSize);
 }
