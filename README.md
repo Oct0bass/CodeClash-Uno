@@ -40,5 +40,26 @@ In the file `config.h` there are options that can be configured at compile time.
 ```c
 bool handleAND(player currentPlayer, card topOfPile);
 bool handleOR(player currentPlayer, card topOfPile);
+void handleReverse(int* reverseFlag);
+bool handleOR(player currentPlayer, card topOfPile);
 ```
 
+`card.c`
+```c
+bool isValidCard(card a , card b);
+void printCard(card c);
+```
+
+`card.h`: `struct card` definition.
+
+`deck.c`
+```c
+card* initializeDeck(card* deck, int* deckSize);
+void shuffleDeck(card* p);
+int drawCard(card* deck, int* deckSize, player* p);
+```
+
+`player.c`:
+```c
+void printPlayer(player player);
+```

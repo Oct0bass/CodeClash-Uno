@@ -14,7 +14,7 @@ typedef struct player_s {
 
 bool checkValidCards(player player, card topCard);
 
-void playCard(player* player, card* discard, int* discardSize, int n);
+card* playCard(player* player, card* discard, int* discardSize, int n);
 
 void printPlayer(player player);
 

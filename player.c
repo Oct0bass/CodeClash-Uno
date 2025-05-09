@@ -6,8 +6,10 @@
 #include "deck.h"
 #include "config.h"
 
-void playCard(player* player, card* discard, int* discardSize, int n) {
-    appendCard(discard, discardSize, removeCard(&player->deck, &player->deckSize, n));
+card* playCard(player* player, card* discard, int* discardSize, int n) {
+    card* removed = removeCard(&player->deck, &player->deckSize, n);
+    appendCard(discard, discardSize, removed);
+    return removed;
 }
 
 void printPlayer(player player) {

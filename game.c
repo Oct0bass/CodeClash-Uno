@@ -85,6 +85,7 @@ int main(void) {
     player* p;
     int reverseFlag = 1;
     char topCardName[20];
+    bool penalizeNext = false;
     for (int currentPlayer = 0; winner == NULL; currentPlayer = (currentPlayer + reverseFlag) % totalPlayers) {
         card* topCard = lastCard(discard, discardSize);
         card* secondCard = secondLastCard(discard, discardSize);
@@ -103,16 +104,28 @@ int main(void) {
         if (topCard == NULL) {
             discard = removeCard(&p->deck, &p->deckSize, makeSelection(*p, (card) {'\0', '\0', NULL}));
             discardSize++;
+            if (discard->color == 'S') {
+                if (discard->name == 'A' || discard->name == 'O') {
+                    playCard(p, discard, &discardSize, makeSelection(*p, *discard));
+                    penalizeNext = true;
+                } else switch (discard->name) {
+                    case 'R': handleReverse(&reverseFlag);
+                    break;
+                    case 'N': 
+                    currentPlayer = handleNOT(currentPlayer, playerCount, reverseFlag);
+                    printf("Next player's turn skipped\n");
+                }
+            }
             continue;
         }
-        if (secondCard && secondCard->color == 'S') {
+        if (secondCard && secondCard->color == 'S' && penalizeNext) {
             switch (secondCard->name) {
                 case 'A':
                 if (handleAND(*p, *topCard)) {
                     playCard(p, discard, &discardSize, makeSelection(*p, *topCard));
                     printf("Card Matches, no AND penalty\n");
                 } else {
-                    printf("%s has no card that matches %s and %d\n", p->name, colorName(*topCard), topCard->name);
+                    printf("%s has no card that matches %s and %c\n", p->name, colorName(*topCard), topCard->name);
                     printf("AND penalty, draw 4\n");
                     drawCards(deck, &deckSize, p, 4);
                 }
@@ -122,22 +135,23 @@ int main(void) {
                     playCard(p, discard, &discardSize, makeSelection(*p, *topCard));
                     printf("Card Matches, no OR penalty\n");
                 } else {
-                    printf("%s has no card that matches %s or %d\n", p->name, colorName(*topCard), topCard->name);
+                    printf("%s has no card that matches %s or %c\n", p->name, colorName(*topCard), topCard->name);
                     printf("OR penalty, draw 4\n");
                     drawCards(deck, &deckSize, p, 4);
                 }
             }
-        } else if (topCard->color == 'S') {
-            switch (topCard->color) {
-                case 'R': handleReverse(&reverseFlag);
-                break;
-                case 'N': currentPlayer = handleNOT(currentPlayer, playerCount, reverseFlag);
-            }
+            penalizeNext = false;
         } else if (checkValidCards(*p, *topCard)) {
-            card* choice = removeCard(&p->deck, &p->deckSize, makeSelection(*p, *topCard));
-            appendCard(discard, &discardSize, choice);
-            if (choice->color == 'S' && (choice->name == 'A' || choice->name == 'O')) {
-                playCard(p, discard, &discardSize, makeSelection(*p, *choice));
+            card* played = playCard(p, discard, &discardSize, makeSelection(*p, *topCard));
+            if (played->color == 'S') {
+                if (played->name == 'A' || played->name == 'O') {
+                    playCard(p, discard, &discardSize, makeSelection(*p, *played));
+                    penalizeNext = true;
+                } else switch (played->name) {
+                    case 'R': handleReverse(&reverseFlag);
+                    break;
+                    case 'N': currentPlayer = handleNOT(currentPlayer, playerCount, reverseFlag);
+                }
             }
         } else drawCard(deck, &deckSize, p);
         if (p->deckSize == 0) winner = p;
@@ -151,6 +165,7 @@ int main(void) {
             }
         }
     }
+    printf("%s wins!", winner->name);
     freeDeck(deck, deckSize);
     freeDeck(discard, discardSize);
     for (int i = 0; i < playerCount; i++) freeDeck(players[i].deck, players[i].deckSize);
